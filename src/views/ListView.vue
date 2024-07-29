@@ -1,11 +1,11 @@
 <template>
-  <div class="row" style="margin-top: 60px;">
-    <div class="col-sm-4 mb-3 mb-sm-0" style="margin-right: 16%;">
+  <div class="row" style="margin-top: 60px">
+    <div class="col-sm-4 mb-3 mb-sm-0" style="margin-right: 16%">
       <div class="card">
         <div class="card-body">
           <div class="col-md-12">
             <h3>待辦事項</h3>
-            <hr>
+            <hr />
           </div>
           <div class="row">
             <div class="col-md-12">
@@ -13,13 +13,13 @@
                 <div class="form-group">
                   <label class="col-6 col-form-label">姓名:</label>
                   <div class="col-12">
-                    <input class="form-control here" required type="text" v-model="data.name">
+                    <input class="form-control here" required type="text" v-model="data.name" />
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-4 col-form-label">待辦標題:</label>
                   <div class="col-12">
-                    <input class="form-control here" type="text" v-model="data.title">
+                    <input class="form-control here" type="text" v-model="data.title" />
                   </div>
                 </div>
                 <div class="form-group">
@@ -38,33 +38,49 @@
     <div class="col-sm-6 mb-3 mb-sm-0">
       <div v-for="todo in allData" :key="todo.todoId">
         <div class="card border-secondary mb-3">
-          <div class="card-header d-flex justify-content-between" style="font-size: 25px;">
+          <div class="card-header d-flex justify-content-between" style="font-size: 25px">
             <div>
-              <img v-if="todo.isComplete == 'Y'" src="/check-circle-fill.svg" style="width: 20px;margin-right: 5px;"/>
-              <img v-else src="/info-circle.svg" style="width: 20px;margin-right: 5px;"/>
+              <img
+                v-if="todo.isComplete == 'Y'"
+                src="/check-circle-fill.svg"
+                style="width: 20px; margin-right: 5px"
+              />
+              <img v-else src="/info-circle.svg" style="width: 20px; margin-right: 5px" />
               {{ todo.name }}
             </div>
-            <div v-if="todo.isComplete == 'Y'" style="padding-left: 5%;font-weight: normal;">已完成 | {{ formatDate(todo.completeTime) }}</div>
+            <div v-if="todo.isComplete == 'Y'" style="padding-left: 5%; font-weight: normal">
+              已完成 | {{ formatDate(todo.completeTime) }}
+            </div>
             <div v-else>未完成</div>
-        </div>
+          </div>
           <div class="card-body text-secondary">
-            <h3 class="card-title" style="color: #4F4F4F;">{{ todo.title }}</h3>
+            <h3 class="card-title" style="color: #4f4f4f">{{ todo.title }}</h3>
             <p class="card-text">{{ todo.todoContent }}</p>
           </div>
-          <div class="d-grid gap-2 d-md-flex justify-content-md-end" style="margin-right: 20px;">
-            <button v-if="todo.isComplete == 'N'" class="btn btn-outline-secondary" type="button" @click="update(todo.todoId)">完成</button>
-            <button class="btn btn-outline-secondary" type="button" @click="modify(todo)">編輯</button>
-            <button class="btn btn-outline-secondary" type="button" @click="remove(todo.todoId)">刪除</button>
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end" style="margin-right: 20px">
+            <button
+              v-if="todo.isComplete == 'N'"
+              class="btn btn-outline-secondary"
+              type="button"
+              @click="update(todo.todoId)"
+            >
+              完成
+            </button>
+            <button class="btn btn-outline-secondary" type="button" @click="modify(todo)">
+              編輯
+            </button>
+            <button class="btn btn-outline-secondary" type="button" @click="remove(todo.todoId)">
+              刪除
+            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
-		
 </template>
 <script setup>
 import { onMounted, ref } from 'vue';
-import axios from 'axios';
+import axios from '@/plugins/axios.js';
 
 const data = ref({
   name: '',
@@ -79,9 +95,9 @@ const todoId = ref(null);
 const submit = async () => {
   try {
     if (modifyData.value) {
-      await axios.put(`https://192.168.233.40/todo/api/Todo/UpdateTodoContent/${todoId.value}`, data.value);
+      await axios.put(`UpdateTodoContent/${todoId.value}`, data.value);
     } else {
-      await axios.post('https://192.168.233.40/todo/api/Todo/InsertTodo', data.value);
+      await axios.post('InsertTodo', data.value);
     }
     await findAll();
     resetForm();
@@ -110,7 +126,7 @@ const formatDate = (date) => {
 
 const findAll = async () => {
   try {
-    const response = await axios.get('https://192.168.233.40/todo/api/Todo/Get');
+    const response = await axios.get('Get');
     allData.value = response.data.returnData;
   } catch (error) {
     console.error(error);
@@ -119,7 +135,10 @@ const findAll = async () => {
 
 const update = async (todoId) => {
   try {
-    await axios.put(`https://192.168.233.40/todo/api/Todo/UpdateTodoStatus/${todoId}`, { todoId: todoId, isComplete: "Y" });
+    await axios.put(`UpdateTodoStatus/${todoId}`, {
+      todoId: todoId,
+      isComplete: 'Y'
+    });
     await findAll();
   } catch (error) {
     console.error(error);
@@ -128,7 +147,7 @@ const update = async (todoId) => {
 
 const remove = async (todoId) => {
   try {
-    await axios.delete(`https://192.168.233.40/todo/api/Todo/Delete/${todoId}`);
+    await axios.delete(`Delete/${todoId}`);
     await findAll();
   } catch (error) {
     console.error(error);
@@ -146,9 +165,10 @@ const modify = (todo) => {
   todoId.value = todo.todoId;
 };
 
-onMounted(findAll);
+onMounted(() => {
+  findAll();
+});
 </script>
-
 
 <style scoped>
 .row {
