@@ -1,5 +1,6 @@
 <template>
   <div class="row" style="margin-top: 60px">
+    <button style="margin-bottom: 30px; border-radius: 5px" @click="logOut">登出</button>
     <div class="col-sm-4 mb-3 mb-sm-0" style="margin-right: 16%">
       <div class="card">
         <div class="card-body">
@@ -13,7 +14,7 @@
                 <div class="form-group">
                   <label class="col-6 col-form-label">姓名:</label>
                   <div class="col-12">
-                    <input class="form-control here" required type="text" v-model="data.name" />
+                    <input class="form-control here" type="text" v-model="data.name" disabled />
                   </div>
                 </div>
                 <div class="form-group">
@@ -36,7 +37,28 @@
       </div>
     </div>
     <div class="col-sm-6 mb-3 mb-sm-0">
-      <div v-for="todo in allData" :key="todo.todoId">
+      <div class="form-check form-check-inline">
+        <input
+          class="form-check-input"
+          type="radio"
+          name="inlineRadioOptions"
+          id="inlineRadio1"
+          @click="check(false)"
+          checked
+        />
+        <label class="form-check-label" for="inlineRadio1">查看全部</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input
+          class="form-check-input"
+          type="radio"
+          name="inlineRadioOptions"
+          id="inlineRadio2"
+          @click="check(true)"
+        />
+        <label class="form-check-label" for="inlineRadio2">只看自己</label>
+      </div>
+      <div v-for="todo in userData" :key="todo.todoId">
         <div class="card border-secondary mb-3">
           <div class="card-header d-flex justify-content-between" style="font-size: 25px">
             <div>
@@ -57,7 +79,11 @@
             <h3 class="card-title" style="color: #4f4f4f">{{ todo.title }}</h3>
             <p class="card-text">{{ todo.todoContent }}</p>
           </div>
-          <div class="d-grid gap-2 d-md-flex justify-content-md-end" style="margin-right: 20px">
+          <div
+            v-if="todo.name === loginUser"
+            class="d-grid gap-2 d-md-flex justify-content-md-end"
+            style="margin-right: 20px"
+          >
             <button
               v-if="todo.isComplete == 'N'"
               class="btn btn-outline-secondary"
@@ -79,18 +105,46 @@
   </div>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+import { useUserStore } from '@/stores/user';
 import axios from '@/plugins/axios.js';
+import Swal from 'sweetalert2';
+
+const router = useRouter();
+
+const { userInfo, loginUser } = storeToRefs(useUserStore());
 
 const data = ref({
-  name: '',
+  name: loginUser,
   title: '',
   todoContent: ''
 });
 
+const resetForm = () => {
+  data.value = {
+    name: loginUser,
+    title: '',
+    todoContent: ''
+  };
+  modifyData.value = false;
+  todoId.value = null;
+};
+
 const allData = ref([]);
 const modifyData = ref(false);
 const todoId = ref(null);
+const checkTodo = ref(false);
+
+const logOut = () => {
+  Swal.fire({
+    title: '登出成功!',
+    icon: 'success'
+  });
+  localStorage.clear();
+  router.push({ name: 'signIn' });
+};
 
 const submit = async () => {
   try {
@@ -106,16 +160,6 @@ const submit = async () => {
   }
 };
 
-const resetForm = () => {
-  data.value = {
-    name: '',
-    title: '',
-    todoContent: ''
-  };
-  modifyData.value = false;
-  todoId.value = null;
-};
-
 const formatDate = (date) => {
   if (date.includes('T')) {
     return date.split('T')[0] + ' ' + date.split('T')[1].split('.')[0];
@@ -127,11 +171,24 @@ const formatDate = (date) => {
 const findAll = async () => {
   try {
     const response = await axios.get('Get');
-    allData.value = response.data.returnData;
+    allData.value = [...response.data.returnData];
   } catch (error) {
     console.error(error);
   }
 };
+
+const check = (value) => {
+  checkTodo.value = value;
+};
+
+const userData = computed(() => {
+  if (!checkTodo.value) {
+    return allData.value;
+  }
+  return allData.value.filter((todo) => {
+    return todo.name === loginUser.value;
+  });
+});
 
 const update = async (todoId) => {
   try {
